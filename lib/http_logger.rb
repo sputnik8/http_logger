@@ -1,5 +1,5 @@
 require 'net/http'
-require 'uri'
+require 'cgi'
 require 'set'
 
 # Usage:
@@ -77,7 +77,7 @@ class HttpLogger
   end
 
   def request_url(http, request)
-    URI.decode("http#{"s" if http.use_ssl?}://#{http.address}:#{http.port}#{request.path}")
+    CGI.unescape("http#{"s" if http.use_ssl?}://#{http.address}:#{http.port}#{request.path}")
   end
 
   def log_request_headers(request)
@@ -87,7 +87,7 @@ class HttpLogger
   end
 
   HTTP_METHODS_WITH_BODY = Set.new(%w(POST PUT GET PATCH))
-  
+
   def log_request_body(request)
     if self.class.log_request_body
       if HTTP_METHODS_WITH_BODY.include?(request.method)
@@ -141,8 +141,8 @@ class HttpLogger
   def truncate_body(body)
     if collapse_body_limit && collapse_body_limit > 0 && body && body.size >= collapse_body_limit
       body_piece_size = collapse_body_limit / 2
-      body[0..body_piece_size] + 
-        "\n\n<some data truncated>\n\n" + 
+      body[0..body_piece_size] +
+        "\n\n<some data truncated>\n\n" +
         body[(body.size - body_piece_size)..body.size]
     else
       body
@@ -195,7 +195,7 @@ class Net::HTTP
 
   def request(request, body = nil, &block)
     HttpLogger.perform(self, request, body) do
-      request_without_logging(request, body, &block) 
+      request_without_logging(request, body, &block)
     end
   end
 
